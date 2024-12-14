@@ -1,0 +1,19 @@
+{
+  "name": "nodejs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "electron ./src/ ."
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "electron": "^33.2.1",
+    "mongodb": "^4.17.2",
+    "xpress": "^2.4.6"
+  },
+  "type": "module"
+}

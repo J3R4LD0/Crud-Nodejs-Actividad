@@ -1,0 +1,297 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Texto</title>
+    <style>
+        body {
+            min-width: 100vh;
+            min-height: 100vh;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: start;
+            justify-content: start;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            width: 300px;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        button {
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #218838;
+        }
+
+        #searchInput {
+            width: 300px;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body style="text-align: start;">
+
+    <h1  style="margin: 10px;">Tareas</h1>
+    
+  
+
+    <!-- Campo de búsqueda -->
+    <input type="text" style="margin: 10px;" id="searchInput" placeholder="Buscar tareas..." />
+
+    
+    <div style="display: flex;">
+        <!-- Tabla para mostrar tareas -->
+        <table id="tasksTable" style="width: 60%; margin: 10px;">
+            <thead>
+                <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Fecha Creación</th>
+                    <th>Fecha Inicio</th>
+                    <th>Fecha Finalización</th>
+                    <th>Código Proyecto</th>
+                    <th>Código Empleado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Las filas de tareas se agregarán aquí -->
+            </tbody>
+        </table>
+
+            <!-- Formulario para insertar datos -->
+            <form id="taskForm" style="width: 40%; margin: 10px;">
+                <h1>crear tarea</h1>
+                <input type="text" id="codigo" placeholder="Código" required>
+                <input type="text" id="nombre" placeholder="Nombre" required>
+                <input type="text" id="descripcion" placeholder="Descripción" required>
+                <input type="date" id="fecha_creacion" required>
+                <input type="date" id="fecha_inicio" required>
+                <input type="date" id="fecha_finalizacion" required>
+                <input type="text" id="codigo_proyecto" placeholder="Código del Proyecto" required>
+                <input type="text" id="codigo_empleado" placeholder="Código del Empleado" required>
+                <button type="submit">Insertar Tarea</button>
+                <button type="button" id="updateTaskBtn" style="display:none;">Actualizar Tarea</button>
+                <button type="button" id="clearFormBtn">Limpiar Formulario</button>
+            </form>
+
+
+    </div>
+
+
+
+    <script>
+
+        window.electron.receiveData((data) => {
+           console.log("Initial data");
+           setAction("get-tareas", {});
+        });
+     
+        window.electron.feedback((data) => {
+
+           if(data.action == "get-tareas" ){
+            console.log("get-tareas")
+            console.log(data)
+                // Aquí se manejará la respuesta para mostrar las tareas en la tabla
+                const tasksTableBody = document.getElementById('tasksTable').getElementsByTagName('tbody')[0];
+                tasksTableBody.innerHTML = ''; // Limpiar tabla antes de agregar nuevas filas
+                data.data.forEach(task => {
+                    const row = tasksTableBody.insertRow();
+                    row.innerHTML = `
+                        <td>${task.codigo}</td>
+                        <td>${task.nombre}</td>
+                        <td>${task.descripcion}</td>
+                        <td>${task.fecha_creacion}</td>
+                        <td>${task.fecha_inicio}</td>
+                        <td>${task.fecha_finalizacion}</td>
+                        <td>${task.codigo_proyecto}</td>
+                        <td>${task.codigo_empleado}</td>
+                        <td><button class="delete-btn" data-id="${task._id.toString()}">Eliminar</button></td>
+                        <td><button class="edit-btn" data-id="${task._id.toString()}">Actualizar</button></td>
+                    `;
+                });
+           } else if(data.action == "insert-tarea" ){
+            setAction("get-tareas", {});
+           } else if(data.action == "delete-tarea" ){
+            setAction("get-tareas", {});
+           } else if(data.action == "update-tarea" ){
+            setAction("get-tareas", {});
+           }
+
+        });
+     
+
+        document.getElementById("taskForm").onsubmit = (event) => {
+            event.preventDefault(); // Prevenir el envío del formulario
+            const formData = {
+                codigo: document.getElementById("codigo").value,
+                nombre: document.getElementById("nombre").value,
+                descripcion: document.getElementById("descripcion").value,
+                fecha_creacion: document.getElementById("fecha_creacion").value,
+                fecha_inicio: document.getElementById("fecha_inicio").value,
+                fecha_finalizacion: document.getElementById("fecha_finalizacion").value,
+                codigo_proyecto: document.getElementById("codigo_proyecto").value,
+                codigo_empleado: document.getElementById("codigo_empleado").value,
+            };
+            setAction("insert-tarea", formData);
+        };
+
+        function setAction(action, data = {}){
+
+            window.electron.setAction({
+                "action":action,
+                "data":data
+            }); 
+        
+        }
+
+        // Manejar el evento de clic en el botón de eliminar
+        document.getElementById('tasksTable').addEventListener('click', (event) => {
+            if (event.target.classList.contains('delete-btn')) {
+                const taskId = event.target.getAttribute('data-id');
+                console.log("ID de tarea a eliminar:", taskId);
+                setAction("delete-tarea", { id: taskId }); // Enviar acción de eliminar
+            } else if (event.target.classList.contains('edit-btn')) {
+                const taskId = event.target.getAttribute('data-id');
+                loadTaskData(taskId); // Cargar datos de la tarea en el formulario
+            }
+        });
+
+        let currentTaskId; // Variable global para almacenar el ID de la tarea actual
+
+        function loadTaskData(taskId) {
+            // Solicitar los datos de la tarea al servidor
+            setAction("get-tarea", { id: taskId }); // Nueva acción para obtener la tarea
+
+            // Escuchar la respuesta del servidor
+            window.electron.feedback((data) => {
+                if (data.action === "get-tarea") {
+                    console.log("Datos de la tarea recibidos:", data.data); // Agregar este log
+                    const task = data.data; // Asumimos que la tarea se devuelve aquí
+                    if (task) { // Verificar que la tarea no sea undefined
+                        currentTaskId = task._id; // Almacenar el ID de la tarea actual
+                        document.getElementById("codigo").value = task.codigo;
+                        document.getElementById("nombre").value = task.nombre;
+                        document.getElementById("descripcion").value = task.descripcion;
+                        document.getElementById("fecha_creacion").value = task.fecha_creacion.toISOString().split('T')[0]; // Formato de fecha
+                        document.getElementById("fecha_inicio").value = task.fecha_inicio.toISOString().split('T')[0]; // Formato de fecha
+                        document.getElementById("fecha_finalizacion").value = task.fecha_finalizacion.toISOString().split('T')[0]; // Formato de fecha
+                        document.getElementById("codigo_proyecto").value = task.codigo_proyecto;
+                        document.getElementById("codigo_empleado").value = task.codigo_empleado;
+                        document.getElementById("updateTaskBtn").style.display = "block"; // Mostrar botón de actualizar
+                    } else {
+                        console.error("No se encontró la tarea con ID:", taskId);
+                    }
+                }
+            });
+        }
+
+        document.getElementById("updateTaskBtn").onclick = () => {
+            const formData = {
+                id: currentTaskId, // Usar el ID correcto aquí
+                codigo: document.getElementById("codigo").value,
+                nombre: document.getElementById("nombre").value,
+                descripcion: document.getElementById("descripcion").value,
+                fecha_creacion: document.getElementById("fecha_creacion").value,
+                fecha_inicio: document.getElementById("fecha_inicio").value,
+                fecha_finalizacion: document.getElementById("fecha_finalizacion").value,
+                codigo_proyecto: document.getElementById("codigo_proyecto").value,
+                codigo_empleado: document.getElementById("codigo_empleado").value,
+            };
+            setAction("update-tarea", formData); // Enviar acción de actualización
+        };
+
+        // Función para limpiar el formulario
+        function clearForm() {
+            document.getElementById("codigo").value = '';
+            document.getElementById("nombre").value = '';
+            document.getElementById("descripcion").value = '';
+            document.getElementById("fecha_creacion").value = '';
+            document.getElementById("fecha_inicio").value = '';
+            document.getElementById("fecha_finalizacion").value = '';
+            document.getElementById("codigo_proyecto").value = '';
+            document.getElementById("codigo_empleado").value = '';
+            document.getElementById("updateTaskBtn").style.display = "none"; // Ocultar botón de actualizar
+        }
+
+        // Asignar la función clearForm al botón de limpiar
+        document.getElementById("clearFormBtn").onclick = clearForm;
+
+        // Función para filtrar tareas
+        function filterTasks() {
+            const searchValue = document.getElementById("searchInput").value.toLowerCase();
+            const tasksTableBody = document.getElementById('tasksTable').getElementsByTagName('tbody')[0];
+            const rows = tasksTableBody.getElementsByTagName('tr');
+
+            for (let row of rows) {
+                const cells = row.getElementsByTagName('td');
+                let rowContainsSearchValue = false;
+
+                for (let cell of cells) {
+                    if (cell.textContent.toLowerCase().includes(searchValue)) {
+                        rowContainsSearchValue = true;
+                        break;
+                    }
+                }
+
+                row.style.display = rowContainsSearchValue ? '' : 'none'; // Mostrar u ocultar fila
+            }
+        }
+
+        // Asignar la función filterTasks al evento input del campo de búsqueda
+        document.getElementById("searchInput").addEventListener("input", filterTasks);
+
+    </script>
+</body>
+</html>
+
